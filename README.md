@@ -1,4 +1,4 @@
-# Teler-openai-Node-Bridge
+# Teler-OpenAi-Node-Bridge
 
 A reference integration between Teler and openai in Node, based on [Media Streaming Bridge](https://frejun.ai/docs/category/media-streaming/) over WebSockets.
 
@@ -8,7 +8,7 @@ A reference integration between Teler and openai in Node, based on [Media Stream
 1. **Clone and configure:**
 
    ```bash
-   git clone https://github.com/rupak-stack/teler-openai-node-bridge.git
+   git clone https://github.com/frejun-tech/teler-openai-node-bridge.git
    cd teler-openai-node-bridge
    cp .env.example .env
    # Edit .env with your actual values
@@ -23,8 +23,9 @@ A reference integration between Teler and openai in Node, based on [Media Stream
 
 | Variable                   | Description                   | Default  |
 | -------------------------- | ----------------------------- | -------- |
-| `OPENAI_WEBSOCKET_URL` | Your openai Websocket URL | Required |
-| `OPENAI_SAMPLE_RATE`   | Audio sample rate             | 8k      |
+| `OPENAI_WEBSOCKET_URL`     | Your OpenAI Websocket URL     | Required |
+| `OPENAI_API_KEY`           | Your OpenAI API KEY           | Required |
+| `OPENAI_SAMPLE_RATE`       | Audio sample rate             | 16k      |
 | `TELER_API_KEY`            | Your Teler API key            | Required |
 | `NGROK_AUTHTOKEN`          | Your ngrok auth token         | Required |
 
@@ -35,7 +36,7 @@ A reference integration between Teler and openai in Node, based on [Media Stream
 - `GET /ngrok-status` - Current ngrok status and URL
 - `POST /api/v1/calls/initiate-call` - Start a new call with dynamic phone numbers
 - `POST /api/v1/calls/flow` - Get call flow configuration
-- `WebSocket /api/v1/calls/media-stream` - Audio streaming
+- `WebSocket /media-stream` - Audio streaming
 - `POST /api/v1/webhooks/receiver` - Teler webhook receiver
 
 ### Call Initiation Example
