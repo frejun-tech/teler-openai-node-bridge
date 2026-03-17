@@ -1,70 +1,67 @@
+import * as alawmulaw from 'alawmulaw';
+
+const CHUNK_SIZE = 320;
+
 export class AudioResampler {
+  private upsampleBuffer = Buffer.alloc(0);
+  private downsampleBuffer = Buffer.alloc(0);
 
-  downsampleBase64(b64String: string): string | null {
+  upsample(base64Input: string): string | null {
     try {
-      const inputBuffer = Buffer.from(b64String, 'base64');
-      const sampleCount = Math.floor(inputBuffer.length / 2);
-      const inputSamples = new Int16Array(sampleCount);
-      for (let i = 0; i < sampleCount; i++) {
-        inputSamples[i] = inputBuffer.readInt16LE(i * 2);
+      this.upsampleBuffer = Buffer.concat([
+        this.upsampleBuffer,
+        Buffer.from(base64Input, 'base64')
+      ]);
+
+      const chunks: Buffer[] = [];
+      while (this.upsampleBuffer.length >= CHUNK_SIZE) {
+        // ✅ force copy
+        const chunk = Buffer.from(this.upsampleBuffer.subarray(0, CHUNK_SIZE));
+        this.upsampleBuffer = Buffer.from(this.upsampleBuffer.subarray(CHUNK_SIZE));
+
+        const samples = new Int16Array(
+          chunk.buffer,
+          chunk.byteOffset,
+          chunk.length / 2
+        );
+        chunks.push(Buffer.from(alawmulaw.mulaw.encode(samples)));
       }
 
-      const outputLength = Math.floor(inputSamples.length / 3);
-      const outputSamples = new Int16Array(outputLength);
-      for (let i = 0; i < outputLength; i++) {
-        const avg = (
-          (inputSamples[i * 3] ?? 0) +
-          (inputSamples[i * 3 + 1] ?? 0) +
-          (inputSamples[i * 3 + 2] ?? 0)
-        ) / 3;
-        outputSamples[i] = Math.round(avg);
-      }
-
-      const outputBuffer = Buffer.alloc(outputSamples.length * 2);
-      for (let i = 0; i < outputSamples.length; i++) {
-        outputBuffer.writeInt16LE(outputSamples[i], i * 2);
-      }
-
-      return outputBuffer.toString('base64');
-    } catch (err: any) {
-      console.error('[AudioResampler] downsampleBase64 error:', err.message);
+      if (chunks.length === 0) return null;
+      return Buffer.concat(chunks).toString('base64');
+    } catch (err) {
+      console.error('[AudioResampler] upsample error:', err);
       return null;
     }
   }
 
-  upsampleBase64(b64String: string, srcRate: number, destRate: number): string | null {
+  downsample(base64Input: string): string | null {
     try {
-      const inputBuffer = Buffer.from(b64String, 'base64');
-      const sampleCount = Math.floor(inputBuffer.length / 2);
-      const inputSamples = new Int16Array(sampleCount);
-      for (let i = 0; i < sampleCount; i++) {
-        inputSamples[i] = inputBuffer.readInt16LE(i * 2);
+      this.downsampleBuffer = Buffer.concat([
+        this.downsampleBuffer,
+        Buffer.from(base64Input, 'base64')
+      ]);
+
+      const chunks: Buffer[] = [];
+      while (this.downsampleBuffer.length >= CHUNK_SIZE / 2) {
+        // ✅ force copy
+        const chunk = Buffer.from(this.downsampleBuffer.subarray(0, CHUNK_SIZE / 2));
+        this.downsampleBuffer = Buffer.from(this.downsampleBuffer.subarray(CHUNK_SIZE / 2));
+
+        const l16Samples = alawmulaw.mulaw.decode(chunk);
+        chunks.push(Buffer.from(l16Samples.buffer));
       }
 
-      const ratio = destRate / srcRate;
-      const outputLength = Math.floor(inputSamples.length * ratio);
-      const outputSamples = new Int16Array(outputLength);
-
-      for (let i = 0; i < outputLength; i++) {
-        const srcPos = i / ratio;
-        const srcIndex = Math.floor(srcPos);
-        const frac = srcPos - srcIndex;
-
-        const s0 = inputSamples[srcIndex] ?? 0;
-        const s1 = inputSamples[srcIndex + 1] ?? s0;
-
-        outputSamples[i] = Math.round(s0 + frac * (s1 - s0));
-      }
-
-      const outputBuffer = Buffer.alloc(outputSamples.length * 2);
-      for (let i = 0; i < outputSamples.length; i++) {
-        outputBuffer.writeInt16LE(outputSamples[i], i * 2);
-      }
-
-      return outputBuffer.toString('base64');
-    } catch (err: any) {
-      console.error('[AudioResampler] upsampleBase64 error:', err.message);
+      if (chunks.length === 0) return null;
+      return Buffer.concat(chunks).toString('base64');
+    } catch (err) {
+      console.error('[AudioResampler] downsample error:', err);
       return null;
     }
+  }
+
+  reset(): void {
+    this.upsampleBuffer = Buffer.alloc(0);
+    this.downsampleBuffer = Buffer.alloc(0);
   }
 }

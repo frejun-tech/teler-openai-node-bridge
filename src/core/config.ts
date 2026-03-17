@@ -8,6 +8,6 @@ export const config = {
     serverDomain:           process.env.SERVER_DOMAIN || '',
     telerKey:               process.env.TELER_API_KEY || '',
     openaiWsUrl:            process.env.OPENAI_WS_URL || '',
-    openaiSampleRate:       process.env.OPENAI_SAMPLE_RATE || '16k',
+    openaiSampleRate:       process.env.OPENAI_SAMPLE_RATE || '8k',
     openaiApiKey:           process.env.OPENAI_API_KEY || '',
 } as const;

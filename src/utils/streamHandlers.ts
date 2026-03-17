@@ -1,16 +1,31 @@
-import { StreamHandlerResult, StreamOP } from "teler-sdk-node";
+import { StreamHandlerResult, StreamOP } from "@frejun/teler";
+import { AudioResampler } from "./audioResampler";
+
+const audioResampler = new AudioResampler();
 
 export const callStreamHandler = async (message: string): Promise<StreamHandlerResult> => {
     try {
         const data = JSON.parse(message);
 
         if(data["type"] === "audio") {
-            const payload: string = JSON.stringify({
-                "user_audio_chunk": data["data"]["audio_b64"]
-            });
-            return [payload, StreamOP.RELAY];
-        }
+            const audioB64: string = data?.data?.audio_b64;
+            if (!audioB64) {
+                return ['', StreamOP.PASS];
+            }
+            
+            const audioPCMUB64 = audioResampler.upsample(audioB64);
+            if (!audioPCMUB64) {
+                return ['', StreamOP.PASS];
+            }
 
+            const payload = JSON.stringify({
+                type: 'input_audio_buffer.append',
+                audio: audioPCMUB64,
+            });
+
+            return [payload, StreamOP.RELAY];
+
+        }
         return ['', StreamOP.PASS];
     } catch(err) {
         console.log("Error in call stream handler", err);
@@ -19,25 +34,45 @@ export const callStreamHandler = async (message: string): Promise<StreamHandlerR
 }
 
 export const remoteStreamHandler = () => {
-    let chunk_id = 1
-
+    let chunkId = 1;
+    
     const handler = async(message: string): Promise<StreamHandlerResult> => {
         try {
-            const data = JSON.parse(message);
+            let data: Record<string, any>;
+            data = JSON.parse(message.toString());
+            
+            const msgType: string = data.type ?? 'unknown';
 
-            if(data["type"] === "audio") {
+            if (msgType === 'response.output_audio.delta') {
+                const audioB64: string = data.delta ?? '';
+                if (!audioB64) {
+                    return ['', StreamOP.PASS];
+                }
+
+                console.log('[debug] chunk received at:', Date.now(), 'size:', audioB64.length);
+
+                const audioPCMUB64 = audioResampler.downsample(audioB64);
+                if (!audioPCMUB64) {
+                    return ['', StreamOP.PASS];
+                }
+
                 const payload = JSON.stringify({
                     "type": "audio",
-                    "audio_b64": data["audio_event"]["audio_base_64"],
-                    "chunk_id": chunk_id,
-                })
-                chunk_id++;
+                    "audio_b64": audioPCMUB64,
+                    "chunk_id": chunkId++,
+                });
+                console.log("Sent audio to Teler");
                 return [payload, StreamOP.RELAY];
-
-            } else if (data["type"] == "interruption") {
-                const payload = JSON.stringify({"type": "clear"});
+                
+            } else if (msgType === 'input_audio_buffer.speech_started') {
+                const payload = JSON.stringify({
+                    "type": "clear"
+                });
                 return [payload, StreamOP.RELAY];
-            } 
+                
+            } else if (msgType === 'error') {
+                console.error('[media-stream][openai] OpenAI error:', data.error ?? {});
+            }
 
             return ['', StreamOP.PASS];
         } catch (err) {

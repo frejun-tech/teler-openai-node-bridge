@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { config } from '../../core/config';
-import { TelerClient} from "teler-sdk-node";
+import { Client} from "@frejun/teler";
 
 export const callRouter = Router();
 
@@ -12,11 +12,11 @@ callRouter.post('/initiate-call', async (req: Request, res: Response) => {
     try {
         const { fromNumber, toNumber, record } = req.body;
 
-        const telerClient       = new TelerClient(config.telerKey);
+        const client            = new Client(config.telerKey);
         const flowUrl           = getFlowUrl();
         const statusCallbackUrl = getStatusCallbackUrl();
 
-        const call = await telerClient.calls.create({
+        const call = await client.calls.create({
             from_number: fromNumber,
             to_number: toNumber,
             flow_url: flowUrl,
@@ -36,7 +36,7 @@ callRouter.post('/flow', (_req: Request, res: Response) => {
         action:      'stream',
         ws_url:      getMediaStreamURL(),
         sample_rate: config.openaiSampleRate,
-        chunk_size:  500,
+        chunk_size:  800,
         record:      false,
     });
 });

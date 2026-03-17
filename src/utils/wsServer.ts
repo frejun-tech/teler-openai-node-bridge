@@ -1,13 +1,21 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { IncomingMessage } from 'http';
 import { Socket } from 'net';
+import { StreamConnector, StreamType } from '@frejun/teler';
 import { config } from '../core/config';
-import { openaiToTeler } from './openaiToTeler';
-import { telerToOpenai } from './telerToOpenai';
+import { callStreamHandler, remoteStreamHandler } from './streamHandlers';
 
 export const wss = new WebSocketServer({ noServer: true });
 
 const remoteHeaders: Record<string, string> = { Authorization: `Bearer ${config.openaiApiKey}` };
+const connector = new StreamConnector(
+    config.openaiWsUrl,
+    StreamType.BIDIRECTIONAL,
+    callStreamHandler,
+    remoteStreamHandler(),
+    remoteHeaders
+);
+
 
 wss.on('connection', async (telerWs: WebSocket) => {
   console.info('[media-stream] Teler WebSocket connected');
@@ -17,73 +25,48 @@ wss.on('connection', async (telerWs: WebSocket) => {
     telerWs.close(1008, 'OPENAI_API_KEY not configured');
     return;
   }
+  
+  const remoteWs = await connector.bridgeStream(telerWs as any);
 
-  const openaiWs = new WebSocket(config.openaiWsUrl, {
-    headers: remoteHeaders,
-  });
+  remoteWs.on('open', async () => {
+      console.info('[media-stream] Connected to OpenAI WebSocket');
 
-  openaiWs.on('error', (err) => {
-    console.error(`[media-stream] OpenAI WS error: ${err.message}`);
-    telerWs.close(1011, 'OpenAI connection error');
-  });
-
-  openaiWs.on('open', async () => {
-    console.info('[media-stream] Connected to OpenAI WebSocket');
-
-    openaiWs.send(JSON.stringify({
-      type: 'session.update',
-      session: {
-        type: 'realtime',
-        instructions: "You are an AI assistant. Be extra kind today. Speak in English and keep you voice stable. No distorted voice.",
-        output_modalities: ["audio"],
-        audio: {
-            input: {
-                format: {
-                    type: "audio/pcm",
-                    rate: 24000,
-                },
-                turn_detection: {
-                    type: "semantic_vad"
-                }
+      remoteWs.send(JSON.stringify({
+          type: 'session.update',
+          session: {
+              type: 'realtime',
+              instructions: 'You are an AI assistant. Be extra kind today. Speak in English and keep your voice stable.',
+              output_modalities: ['audio'],
+              audio: {
+                input: {
+                  format: { type: 'audio/pcmu' },
+                  turn_detection: { type: 'semantic_vad' },
                 },
                 output: {
-                format: {
-                    type: "audio/pcm",
-                    rate: 24000,
+                  format: { type: 'audio/pcmu'},
+                  voice: 'marin',
                 },
-                voice: "marin",
-            }
-        },
-      },
-    }));
+              },
+          },
+      }));
 
-    const sessionCreated = await waitForMessage(openaiWs, 'session.created');
-    if (!sessionCreated) {
-      console.error('[media-stream] Failed to create OpenAI session');
-      telerWs.close(1011, 'OpenAI session setup failed');
-      return;
-    }
+      const sessionCreated = await waitForMessage(remoteWs, 'session.created');
+      if (!sessionCreated) {
+          console.error('[media-stream] Failed to create OpenAI session');
+          telerWs.close(1011, 'OpenAI session setup failed');
+          return;
+      }
 
-    const sessionId = sessionCreated?.session?.id;
-    console.info(`[media-stream] OpenAI session created: ${sessionId}`);
+      console.info(`[media-stream] OpenAI session created: ${sessionCreated?.session?.id}`);
 
-    openaiWs.send(JSON.stringify({
-      type: 'response.create',
-      response: {
-        instructions: 'Greet the user warmly in one short sentence. Keep your voice stable.',
-      },
-    }));
-
-    openaiToTeler(openaiWs, telerWs);
-    telerToOpenai(openaiWs, telerWs);
+      remoteWs.send(JSON.stringify({
+          type: 'response.create',
+          response: {
+              instructions: 'Greet the user warmly in one short sentence. Keep your voice stable. Speak english.',
+          },
+      }));
   });
 
-  telerWs.on('close', () => {
-    console.info('[media-stream] Teler disconnected, closing OpenAI WS');
-    if (openaiWs.readyState === WebSocket.OPEN) {
-      openaiWs.close();
-    }
-  });
 });
 
 function waitForMessage(
