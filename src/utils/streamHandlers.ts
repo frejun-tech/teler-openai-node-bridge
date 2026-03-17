@@ -1,7 +1,7 @@
 import { StreamHandlerResult, StreamOP } from "@frejun/teler";
-import { AudioResampler } from "./audioResampler";
+import { AudioConverter } from "./audioConverter";
 
-const audioResampler = new AudioResampler();
+const audioConverter = new AudioConverter();
 
 export const callStreamHandler = async (message: string): Promise<StreamHandlerResult> => {
     try {
@@ -13,14 +13,14 @@ export const callStreamHandler = async (message: string): Promise<StreamHandlerR
                 return ['', StreamOP.PASS];
             }
             
-            const audioPCMUB64 = audioResampler.upsample(audioB64);
-            if (!audioPCMUB64) {
+            const audio = audioConverter.encode(audioB64);
+            if (!audio) {
                 return ['', StreamOP.PASS];
             }
 
             const payload = JSON.stringify({
                 type: 'input_audio_buffer.append',
-                audio: audioPCMUB64,
+                audio: audio,
             });
 
             return [payload, StreamOP.RELAY];
@@ -49,19 +49,16 @@ export const remoteStreamHandler = () => {
                     return ['', StreamOP.PASS];
                 }
 
-                console.log('[debug] chunk received at:', Date.now(), 'size:', audioB64.length);
-
-                const audioPCMUB64 = audioResampler.downsample(audioB64);
-                if (!audioPCMUB64) {
+                const audio = audioConverter.decode(data.delta);
+                if (!audio) {
                     return ['', StreamOP.PASS];
                 }
 
                 const payload = JSON.stringify({
                     "type": "audio",
-                    "audio_b64": audioPCMUB64,
+                    "audio_b64": audio,
                     "chunk_id": chunkId++,
                 });
-                console.log("Sent audio to Teler");
                 return [payload, StreamOP.RELAY];
                 
             } else if (msgType === 'input_audio_buffer.speech_started') {
