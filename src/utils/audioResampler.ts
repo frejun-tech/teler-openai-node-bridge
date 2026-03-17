@@ -15,7 +15,6 @@ export class AudioResampler {
 
       const chunks: Buffer[] = [];
       while (this.upsampleBuffer.length >= CHUNK_SIZE) {
-        // ✅ force copy
         const chunk = Buffer.from(this.upsampleBuffer.subarray(0, CHUNK_SIZE));
         this.upsampleBuffer = Buffer.from(this.upsampleBuffer.subarray(CHUNK_SIZE));
 
@@ -44,7 +43,6 @@ export class AudioResampler {
 
       const chunks: Buffer[] = [];
       while (this.downsampleBuffer.length >= CHUNK_SIZE / 2) {
-        // ✅ force copy
         const chunk = Buffer.from(this.downsampleBuffer.subarray(0, CHUNK_SIZE / 2));
         this.downsampleBuffer = Buffer.from(this.downsampleBuffer.subarray(CHUNK_SIZE / 2));
 
