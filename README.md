@@ -25,7 +25,7 @@ A reference integration between Teler and openai in Node, based on [Media Stream
 | -------------------------- | ----------------------------- | -------- |
 | `OPENAI_WEBSOCKET_URL`     | Your OpenAI Websocket URL     | Required |
 | `OPENAI_API_KEY`           | Your OpenAI API KEY           | Required |
-| `OPENAI_SAMPLE_RATE`       | Audio sample rate             | 16k      |
+| `OPENAI_SAMPLE_RATE`       | Audio sample rate             | 8k      |
 | `TELER_API_KEY`            | Your Teler API key            | Required |
 | `NGROK_AUTHTOKEN`          | Your ngrok auth token         | Required |
 
