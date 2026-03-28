@@ -6,7 +6,7 @@ export const callRouter = Router();
 
 export const getFlowUrl             = () => `https://${process.env.SERVER_DOMAIN}/api/v1/calls/flow`;
 export const getStatusCallbackUrl   = () => `https://${process.env.SERVER_DOMAIN}/api/v1/webhooks/receiver`;
-export const getMediaStreamURL      = () => `wss://${process.env.SERVER_DOMAIN}/media-stream`
+export const getMediaStreamURL      = () => `wss://${process.env.SERVER_DOMAIN}/api/v1/media-stream`
 
 callRouter.post('/initiate-call', async (req: Request, res: Response) => {
     try {
@@ -24,7 +24,7 @@ callRouter.post('/initiate-call', async (req: Request, res: Response) => {
             record: record ?? true
         });
 
-        console.log(`Call created successfully: ${JSON.stringify(call)}`);
+        console.info(`Call created successfully: ${JSON.stringify(call)}`);
         res.status(200).json({ message: 'Call initiated', call: call });
     } catch (error) {
         res.status(500).json({ message: 'Failed to initiate call', error: error});
