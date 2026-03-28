@@ -23,7 +23,7 @@ export const getCurrentNgrokUrl = async (): Promise<string | null> => {
         for (const tunnel of tunnels) {
             if (tunnel.proto === 'https' && tunnel.public_url) {
                 const domain = tunnel.public_url.replace('https://', '');
-                console.log(`Detected ngrok URL: ${tunnel.public_url}`);
+                console.info(`Detected ngrok URL: ${tunnel.public_url}`);
                 return domain;
             }
         }
@@ -44,7 +44,7 @@ export const getServerDomain = async (): Promise<string> => {
 
     const fallback = process.env.SERVER_DOMAIN ?? '';
     if (fallback) {
-        console.log(`Using fallback SERVER_DOMAIN: ${fallback}`);
+        console.info(`Using fallback SERVER_DOMAIN: ${fallback}`);
         return fallback;
     }
 

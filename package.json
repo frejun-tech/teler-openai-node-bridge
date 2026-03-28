@@ -10,8 +10,7 @@
     "serve": "node dist/index.js"
   },
   "dependencies": {
-    "@frejun/teler": "^1.0.6",
-    "alawmulaw": "^6.0.0",
+    "@frejun/teler": "^1.0.7",
     "axios": "^1.13.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",

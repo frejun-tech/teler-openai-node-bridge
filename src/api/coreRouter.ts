@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { callRouter } from './endpoints/calls';
 import { webhookRouter } from './endpoints/webhooks';
 
-export const router = Router();
+export const coreRouter = Router();
 
-router.use('/v1/calls', callRouter);
-router.use('/v1/webhooks', webhookRouter);
+coreRouter.use('/v1/calls', callRouter);
+coreRouter.use('/v1/webhooks', webhookRouter);
