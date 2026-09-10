@@ -1,4 +1,4 @@
-# Teler-OpenAi-Node-Bridge
+# Teler-OpenAI-Node-Bridge
 
 A reference integration between Teler and openai in Node, based on [Media Streaming Bridge](https://frejun.ai/docs/category/media-streaming/) over WebSockets.
 
@@ -28,7 +28,8 @@ Teler is a programmable voice API by FreJun. It handles carriers, phone numbers,
 | -------------------------- | ----------------------------- | -------- |
 | `OPENAI_WEBSOCKET_URL`     | Your OpenAI Websocket URL     | Required |
 | `OPENAI_API_KEY`           | Your OpenAI API KEY           | Required |
-| `OPENAI_SAMPLE_RATE`       | Audio sample rate             | 8k      |
+| `OPENAI_SAMPLE_RATE`       | Audio sample rate             | 16k      |
+| `BUFFER_SIZE`              | Message buffer size           | 10      |
 | `TELER_API_KEY`            | Your Teler API key            | Required |
 | `NGROK_AUTHTOKEN`          | Your ngrok auth token         | Required |
 
@@ -57,5 +58,6 @@ curl -X POST "https://your_ngrok_domain/api/v1/calls/initiate-call" \
 
 - **Bi-directional media streaming** - Bridges audio between Teler and openai (Voice API) over WebSockets.
 - **Real-time audio handling** - Receives live audio chunks from Teler, processes them, and forwards to openai; streams responses back to Teler.
+- **High-quality audio resampling** - Converts audio between Teler and OpenAI sample rates using interpolation and low-pass filtering, minimizing distortion and preserving speech clarity during real-time streaming.
 - **Dockerized setup** - Comes with Dockerfile and docker-compose.yaml for easy local development and deployment.
 - **Dynamic ngrok URL detection** - Automatically detects current ngrok domain

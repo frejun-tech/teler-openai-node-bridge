@@ -36,7 +36,7 @@ callRouter.post('/flow', (_req: Request, res: Response) => {
         action:      'stream',
         ws_url:      getMediaStreamURL(),
         sample_rate: config.openaiSampleRate,
-        chunk_size:  800,
-        record:      false,
+        chunk_size:  1600,
+        record:      true,
     });
 });
