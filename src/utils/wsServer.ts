@@ -24,9 +24,9 @@ wss.on('connection', async (telerWs: WebSocket) => {
   const call = new Call();
   const connector = new StreamConnector(
     config.openaiWsUrl,
-    StreamType.BIDIRECTIONAL,
     callStreamHandler(call),
     remoteStreamHandler(call),
+    StreamType.BIDIRECTIONAL,
     remoteHeaders
   );
   

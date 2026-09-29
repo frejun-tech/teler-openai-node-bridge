@@ -1,12 +1,12 @@
-import { StreamHandlerResult, StreamOP } from "@frejun/teler";
+import { StreamData, StreamHandlerResult, StreamOP } from "@frejun/teler";
 import { Call } from "../models/call";
 import { config } from "../core/config";
 
 
 export const callStreamHandler = (call: Call) => {
-    const handler = async (message: string): Promise<StreamHandlerResult> => {
+    const handler = async (message: StreamData): Promise<StreamHandlerResult> => {
         try {
-            const data = JSON.parse(message);
+            const data = (typeof message === "string") ? JSON.parse(message) : message;
 
             if(data["type"] === "audio") {
                 const audioB64: string = data?.data?.audio_b64;
@@ -56,10 +56,10 @@ export const remoteStreamHandler = (call: Call) => {
         return payload;
     }
     
-    const handler = async(message: string): Promise<StreamHandlerResult> => {
+    const handler = async(message: StreamData): Promise<StreamHandlerResult> => {
         try {
             let data: Record<string, any>;
-            data = JSON.parse(message.toString());
+            data = (typeof message === "string") ? JSON.parse(message.toString()) : message;
             
             const msgType: string = data.type ?? 'unknown';
 
